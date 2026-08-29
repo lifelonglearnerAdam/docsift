@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>析文 DocSift — 上传文档，30 秒生成结构化报告</title>
+<meta name="description" content="上传合同、会议记录、简历、财报，自动生成结构化分析报告。关键句在原文中高亮对照，AI 双引擎，本地解析。">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+</head>
+<body>
+<header class="site-head">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">析文</span>
+    <span class="brand-name">DocSift</span>
+  </div>
+  <nav class="head-nav">
+    <button id="engineToggle" class="engine-toggle" type="button" aria-expanded="false">
+      <span class="engine-dot" aria-hidden="true"></span>
+      <span id="engineLabel">本地引擎</span>
+    </button>
+    <a class="gh-link" href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1 class="hero-title">长文档的要点，<em>三十秒</em>摆在你面前。</h1>
+    <p class="hero-sub">上传合同、会议记录、简历或财报，析文抽出结构、风险和关键数字——每一条结论都回链到原文位置，可核对，不编造。</p>
+  </section>
+
+  <section class="workspace" id="workspace">
+    <!-- 左：上传/原文 -->
+    <div class="pane pane-doc">
+      <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="上传文档">
+        <div class="drop-inner">
+          <svg class="drop-icon" viewBox="0 0 48 48" width="44" height="44" fill="none" aria-hidden="true">
+            <path d="M24 6l10 12h-6v14h-8V18h-6L24 6z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M8 38h32" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <p class="drop-main">拖入文档，或<span class="drop-browse">点击选择</span></p>
+          <p class="drop-hint">支持 PDF / TXT / Markdown / DOCX，单文件 10MB 内</p>
+          <p class="drop-alt">或直接<a href="#" id="pasteSample">载入示例合同</a>看看效果</p>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.txt,.md,.markdown,.docx" hidden>
+      </div>
+      <div id="docView" class="doc-view" hidden>
+        <div class="doc-meta">
+          <span id="docName" class="doc-name"></span>
+          <span id="docStat" class="doc-stat"></span>
+          <button id="docClear" class="doc-clear" type="button">换一份</button>
+        </div>
+        <div id="docText" class="doc-text" tabindex="0"></div>
+      </div>
+    </div>
+
+    <!-- 右：报告 -->
+    <div class="pane pane-report">
+      <div id="reportEmpty" class="report-empty">
+        <div class="report-empty-inner">
+          <p class="re-title">报告会出现在这里</p>
+          <p class="re-sub">析文会先判断文档类型，再按类型选择分析框架：</p>
+          <ul class="re-list">
+            <li><strong>合同</strong> — 双方义务、金额条款、期限、风险点</li>
+            <li><strong>会议记录</strong> — 决议、待办、责任人、截止时间</li>
+            <li><strong>简历</strong> — 技能匹配、经历亮点、存疑处</li>
+            <li><strong>财报</strong> — 核心指标、同比变化、异常值</li>
+          </ul>
+        </div>
+      </div>
+      <div id="reportLoading" class="report-loading" hidden>
+        <div class="scan-line" aria-hidden="true"></div>
+        <p class="rl-title">正在析文…</p>
+        <p class="rl-step" id="loadingStep">读取文档</p>
+      </div>
+      <div id="reportBody" class="report-body" hidden></div>
+    </div>
+  </section>
+
+  <section class="feature-strip">
+    <div class="feat">
+      <h3>结论可回溯</h3>
+      <p>每条结论标注原文出处，点击即跳转高亮，拒绝 AI 幻觉。</p>
+    </div>
+    <div class="feat">
+      <h3>双引擎</h3>
+      <p>内置规则引擎离线可用；接入大模型 API 后自动切换，报告质量升级。</p>
+    </div>
+    <div class="feat">
+      <h3>本地解析</h3>
+      <p>文档在浏览器内解析，不上传服务器，敏感内容不出本机。</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <p>析文 DocSift · 纯前端文档分析工具 · MIT License</p>
+</footer>
+
+<!-- 引擎配置弹层 -->
+<div id="enginePanel" class="engine-panel" hidden>
+  <div class="engine-panel-card" role="dialog" aria-label="分析引擎设置">
+    <h2>分析引擎</h2>
+    <div class="engine-opt">
+      <label>
+        <input type="radio" name="engine" value="local" checked>
+        <span><strong>本地规则引擎</strong><small>离线可用，关键词与结构规则分析，适合快速浏览。</small></span>
+      </label>
+    </div>
+    <div class="engine-opt">
+      <label>
+        <input type="radio" name="engine" value="llm">
+        <span><strong>大模型引擎</strong><small>填写兼容 OpenAI 格式的 API 地址与密钥，深入理解语义。</small></span>
+      </label>
+    </div>
+    <div id="llmFields" class="llm-fields" hidden>
+      <label class="field">
+        <span>API 地址</span>
+        <input type="url" id="llmBase" placeholder="https://api.deepseek.com/v1">
+      </label>
+      <label class="field">
+        <span>API Key</span>
+        <input type="password" id="llmKey" placeholder="sk-…" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>模型</span>
+        <input type="text" id="llmModel" placeholder="deepseek-chat">
+      </label>
+      <p class="field-note">密钥只存在你本机浏览器 localStorage，请求直连你填写的服务商。</p>
+    </div>
+    <div class="engine-actions">
+      <button type="button" id="engineSave" class="btn-primary">保存</button>
+      <button type="button" id="engineCancel" class="btn-ghost">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
