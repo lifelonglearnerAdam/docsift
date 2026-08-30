@@ -2,7 +2,7 @@
 
 > 上传文档，30 秒生成结构化报告 —— 每条结论都回链原文，可核对，不编造。
 
-**在线体验**：GitHub Pages 部署后填链接
+**在线体验**：[https://lifelonglearneradam.github.io/docsift/](https://lifelonglearneradam.github.io/docsift/)
 
 ## 它解决什么问题
 
