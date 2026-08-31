@@ -235,6 +235,7 @@ quote 必须逐字取自原文，不得改写。只输出 JSON。`;
     body: JSON.stringify({
       model: model || 'deepseek-chat',
       temperature: 0.2,
+      max_tokens: 4000,
       messages: [
         { role: 'system', content: sys },
         { role: 'user', content: `文档类型判定：${kind}\n\n文档内容：\n${text.slice(0, 12000)}` },
