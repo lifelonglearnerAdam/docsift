@@ -345,6 +345,22 @@ async function processFile(file) {
   }
 }
 
+/* 恢复上次的引擎选择 */
+(() => {
+  const eng = localStorage.getItem('docsift-engine');
+  if (eng === 'llm') {
+    const saved = JSON.parse(localStorage.getItem('docsift-llm') || 'null');
+    if (saved && saved.base && saved.key) {
+      state.engine = 'llm';
+      state.llm = saved;
+      document.querySelector('input[name=engine][value=llm]').checked = true;
+      const toggle = document.querySelector('.engine-toggle');
+      toggle.classList.add('is-llm');
+      document.getElementById('engineLabel').textContent = '大模型引擎';
+    }
+  }
+})();
+
 /* ================= 事件绑定 ================= */
 const dz = $('dropZone');
 const fi = $('fileInput');
@@ -401,6 +417,7 @@ $('engineSave').addEventListener('click', () => {
     $('engineLabel').textContent = '本地引擎';
   }
   ep.hidden = true;
+  localStorage.setItem('docsift-engine', val);
   toast(`已切换到${val === 'llm' ? '大模型' : '本地'}引擎，重新上传文档生效`);
 });
 
